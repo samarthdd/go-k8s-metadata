@@ -1,4 +1,7 @@
 # go-k8s-metadata
+
+To build for local testing
+
 ### Docker build
 - To build the docker image
 
@@ -6,6 +9,17 @@
 git clone https://github.com/go-k8s-metadata.git
 cd k8-proxy/go-k8s-metadata
 docker build -t <docker_image_name> .
+Environment variable requierd
+export ADAPTATION_REQUEST_QUEUE_HOSTNAME='<rabbit-host>' \ 
+ADAPTATION_REQUEST_QUEUE_PORT='<rabbit-port>' \
+MESSAGE_BROKER_USER='<rabbit-user>' \
+MESSAGE_BROKER_PASSWORD='<rabbit-password>' \
+MINIO_ENDPOINT='<minio-endpoint>' \ 
+MINIO_ACCESS_KEY='<minio-access>' \ 
+MINIO_SECRET_KEY='<minio-secret>' \ 
+MINIO_SOURCE_BUCKET='<bucket-to-upload-file>' \ 
+Tika_ENDPOINT='<tika-endpoint>' 
+
 ```
 ### build
 
