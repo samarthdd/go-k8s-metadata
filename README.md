@@ -43,3 +43,6 @@ docker run -d --hostname <host_name> --name <container_name> -p 15672:15672 -p 5
  docker pull apache/tika:1.25
  docker run -d -p 9998:9998 apache/tika:1.25
 ```
+# Rebuild flow to implement
+
+![new-rebuild-flow-v2](https://github.com/k8-proxy/go-k8s-infra/raw/main/diagram/go-k8s-infra.png)
