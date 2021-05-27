@@ -18,6 +18,7 @@ MINIO_ENDPOINT='<minio-endpoint>' \
 MINIO_ACCESS_KEY='<minio-access>' \ 
 MINIO_SECRET_KEY='<minio-secret>' \ 
 MINIO_SOURCE_BUCKET='<bucket-to-upload-file>' \ 
+MINIO_CLEAN_BUCKET='<bucket-to-upload-file>' \ 
 Tika_ENDPOINT='<tika-endpoint>' 
 
 ```
