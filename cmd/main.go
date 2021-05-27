@@ -17,6 +17,7 @@ import (
 
 	zlog "github.com/rs/zerolog/log"
 
+	"github.com/go-k8s-metadata/diff"
 	"github.com/go-k8s-metadata/tika"
 	"github.com/k8-proxy/k8-go-comm/pkg/minio"
 	"github.com/k8-proxy/k8-go-comm/pkg/rabbitmq"
@@ -131,20 +132,57 @@ func processTikaMessage(d amqp.Table) error {
 
 	fileID := d["file-id"].(string)
 	sourcePresignedURL := d["source-presigned-url"].(string)
-	f, err := getFile(sourcePresignedURL)
+	fsource, err := getFile(sourcePresignedURL)
 	if err != nil {
 		return fmt.Errorf("error failed to download from Minio:%s", err)
 	}
 
-	r := bytes.NewReader(f)
-	str, err := process("meta", r)
+	rs := bytes.NewReader(fsource)
+	strs, err := process("meta", rs)
 
 	if err != nil {
 		fmt.Println(err)
 		return fmt.Errorf("tika error: %v", err)
 	}
 
-	minioUploadProcess([]byte(str), fileID, ".txt", "meta-presigned-url", d)
+	minioUploadProcess([]byte(strs), fileID+"-source-mete", ".txt", "meta-presigned-url", d)
+	rs = bytes.NewReader(fsource)
+
+	strsource, err := process("parse", rs)
+
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("tika error: %v", err)
+	}
+
+	cleanPresignedURL := d["clean-presigned-url"].(string)
+
+	fclean, err := getFile(cleanPresignedURL)
+	if err != nil {
+		return fmt.Errorf("error failed to download from Minio:%s", err)
+	}
+
+	rc := bytes.NewReader(fclean)
+	strc, err := process("meta", rc)
+
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("tika error: %v", err)
+	}
+
+	minioUploadProcess([]byte(strc), fileID+"-clean-mete", ".txt", "clean-presigned-url", d)
+	rc = bytes.NewReader(fclean)
+
+	strclean, err := process("parse", rc)
+
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("tika error: %v", err)
+	}
+	// strsource  strclean
+	dif := diff.CharacterDiff(strsource, strclean)
+
+	minioUploadProcess([]byte(dif), fileID+"-diff", ".txt", "comparison-url", d)
 
 	return nil
 
