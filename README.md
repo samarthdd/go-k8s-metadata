@@ -1,1 +1,1 @@
-# template
+# go-k8s-metadata
