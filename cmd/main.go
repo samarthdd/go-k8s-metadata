@@ -73,13 +73,9 @@ var (
 
 func main() {
 	var err error
+
 	if serverURL == "" {
-		serverURL = "http://localhost:9998"
-	} else {
-		fmt.Println(serverURL)
-	}
-	if serverURL == "" {
-		log.Fatal("no URL specified: set serverURL, serverJAR and/or downloadVersion")
+		log.Fatal("no URL specified: set Tika serverURL")
 	}
 	minioClient, err = minio.NewMinioClient(minioEndpoint, minioAccessKey, minioSecretKey, false)
 	if err != nil {
