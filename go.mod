@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
+	github.com/gorilla/mux v1.8.0
 	github.com/k8-proxy/k8-go-comm v0.1.4
 	github.com/minio/minio-go/v7 v7.0.10
 	github.com/opentracing/opentracing-go v1.2.0
