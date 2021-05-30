@@ -4,12 +4,13 @@ To build for local testing
 
 ### Docker build
 - To build the docker image
-
+- note to active go-k8s-metadata service set SRV_MEDATA_ON=true
+- note to active go-k8s-metadata API set HTTP_API_ON=true and set PORT
 ```
 git clone https://github.com/go-k8s-metadata.git
 cd k8-proxy/go-k8s-metadata
 docker build -t <docker_image_name> .
-Environment variable requierd
+Environment variable requierd for go-k8s-metadata service
 export ADAPTATION_REQUEST_QUEUE_HOSTNAME='<rabbit-host>' \ 
 ADAPTATION_REQUEST_QUEUE_PORT='<rabbit-port>' \
 MESSAGE_BROKER_USER='<rabbit-user>' \
@@ -19,7 +20,20 @@ MINIO_ACCESS_KEY='<minio-access>' \
 MINIO_SECRET_KEY='<minio-secret>' \ 
 MINIO_SOURCE_BUCKET='<bucket-to-upload-file>' \ 
 MINIO_CLEAN_BUCKET='<bucket-to-upload-file>' \ 
-Tika_ENDPOINT='<tika-endpoint>' 
+Tika_ENDPOINT='<tika-endpoint>' \
+SRV_MEDATA_ON=true \
+HTTP_API_ON=true \
+PORT=<'API-port'>
+
+```
+```
+- note to active go-k8s-metadata API only set HTTP_API_ON=true and set PORT
+Environment variable requierd for go-k8s-metadata API
+export ADAPTATION_REQUEST_QUEUE_HOSTNAME='<rabbit-host>' \ 
+Tika_ENDPOINT='<tika-endpoint>' \
+SRV_MEDATA_ON=false \
+HTTP_API_ON=true \
+PORT=<'API-port'>
 
 ```
 ### build
