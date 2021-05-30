@@ -29,8 +29,7 @@ PORT=<'API-port'>
 ```
 - note to active go-k8s-metadata API only set HTTP_API_ON=true and set PORT
 Environment variable requierd for go-k8s-metadata API
-export ADAPTATION_REQUEST_QUEUE_HOSTNAME='<rabbit-host>' \ 
-Tika_ENDPOINT='<tika-endpoint>' \
+export Tika_ENDPOINT='<tika-endpoint>' \
 SRV_MEDATA_ON=false \
 HTTP_API_ON=true \
 PORT=<'API-port'>
