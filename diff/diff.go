@@ -129,3 +129,22 @@ func diffsToPatchLines(diffs []diffmatchpatch.Diff) []string {
 	b.Flush()
 	return b.output
 }
+func CharacterDiffEx(a, b string) string {
+	return diffsToStrEx(diff(a, b))
+}
+func diffsToStrEx(diffs []diffmatchpatch.Diff) string {
+	var buff bytes.Buffer
+	for _, diff := range diffs {
+		text := diff.Text
+		switch diff.Type {
+		case diffmatchpatch.DiffInsert:
+			buff.WriteString(text)
+		case diffmatchpatch.DiffDelete:
+			buff.WriteString(text)
+
+		case diffmatchpatch.DiffEqual:
+			//buff.WriteString(text)
+		}
+	}
+	return buff.String()
+}

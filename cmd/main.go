@@ -18,6 +18,7 @@ import (
 	zlog "github.com/rs/zerolog/log"
 
 	"github.com/go-k8s-metadata/diff"
+	"github.com/go-k8s-metadata/server"
 	"github.com/go-k8s-metadata/tika"
 	"github.com/k8-proxy/k8-go-comm/pkg/minio"
 	"github.com/k8-proxy/k8-go-comm/pkg/rabbitmq"
@@ -64,64 +65,84 @@ var (
 	ProcessingOutcomeExchange   = "results-submission-exchange"
 	ProcessingOutcomeRoutingKey = "results-submission"
 	ProcessingOutcomeQueueName  = "results-submission-queue"
-	fileorg                     io.Reader
-	filereb                     io.Reader
-	TikaClient                  *tika.Client
-	minioClient                 *miniov7.Client
-	publisher                   *amqp.Channel
+	srvmetada                   = os.Getenv("SRV_MEDATA_ON")
+	httpserver                  = os.Getenv("HTTP_API_ON")
+	httpserverport              = os.Getenv("PORT")
+
+	fileorg     io.Reader
+	filereb     io.Reader
+	TikaClient  *tika.Client
+	minioClient *miniov7.Client
+	publisher   *amqp.Channel
 )
 
 func main() {
+	httpserverport := os.Getenv("PORT")
+	if httpserverport == "" {
+		httpserverport = "8080"
+	}
+
+	if httpserver != "true" && srvmetada != "true" {
+		log.Fatal("no specified :please set SRV_MEDATA_ON  or  HTTP_SERVER_ON true ")
+	}
+
 	var err error
 
 	if serverURL == "" {
 		log.Fatal("no URL specified: set Tika serverURL")
 	}
-	minioClient, err = minio.NewMinioClient(minioEndpoint, minioAccessKey, minioSecretKey, false)
-	if err != nil {
-		zlog.Fatal().Err(err).Msg("error could not start minio client ")
-	}
-	// Get a connection
-	connection, err := rabbitmq.NewInstance(adaptationRequestQueueHostname, adaptationRequestQueuePort, messagebrokeruser, messagebrokerpassword)
-	if err != nil {
-		zlog.Fatal().Err(err).Msg("error could not start rabbitmq connection ")
-	}
-	// Initiate a publisher on processing exchange
-	publisher, err = rabbitmq.NewQueuePublisher(connection, ProcessingOutcomeExchange, amqp.ExchangeDirect)
-	if err != nil {
-		zlog.Fatal().Err(err).Msg("error could not start rabbitmq publisher ")
-	}
-
-	// Start a consumer
-	msgs, ch, err := rabbitmq.NewQueueConsumer(connection, ProcessingRequestQueueName, ProcessingRequestExchange, amqp.ExchangeDirect, ProcessingRequestRoutingKey, amqp.Table{})
-	if err != nil {
-		zlog.Fatal().Err(err).Msg("error could not start rabbitmq consumer ")
-	}
-	defer ch.Close()
 
 	TikaClient = tika.NewClient(nil, serverURL)
+	if httpserver == "true" {
+		server.Start(httpserverport, TikaClient)
+	}
 
-	forever := make(chan bool)
+	if srvmetada == "true" {
 
-	// Consume
-	go func() {
-		for d := range msgs {
-			fmt.Println("meta received message")
-
-			zlog.Info().Msg("received message from queue ")
-
-			err := processTikaMessage(d.Headers)
-			if err != nil {
-				zlog.Error().Err(err).Msg("error Failed to process message")
-			}
-
-			// Closing the channel to exit
-			zlog.Info().Msg(" closing the channel")
+		minioClient, err = minio.NewMinioClient(minioEndpoint, minioAccessKey, minioSecretKey, false)
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("error could not start minio client ")
 		}
-	}()
+		// Get a connection
+		connection, err := rabbitmq.NewInstance(adaptationRequestQueueHostname, adaptationRequestQueuePort, messagebrokeruser, messagebrokerpassword)
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("error could not start rabbitmq connection ")
+		}
+		// Initiate a publisher on processing exchange
+		publisher, err = rabbitmq.NewQueuePublisher(connection, ProcessingOutcomeExchange, amqp.ExchangeDirect)
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("error could not start rabbitmq publisher ")
+		}
 
-	log.Printf("Waiting for messages")
-	<-forever
+		// Start a consumer
+		msgs, ch, err := rabbitmq.NewQueueConsumer(connection, ProcessingRequestQueueName, ProcessingRequestExchange, amqp.ExchangeDirect, ProcessingRequestRoutingKey, amqp.Table{})
+		if err != nil {
+			zlog.Fatal().Err(err).Msg("error could not start rabbitmq consumer ")
+		}
+		defer ch.Close()
+
+		forever := make(chan bool)
+
+		// Consume
+		go func() {
+			for d := range msgs {
+				fmt.Println("meta received message")
+
+				zlog.Info().Msg("received message from queue ")
+
+				err := processTikaMessage(d.Headers)
+				if err != nil {
+					zlog.Error().Err(err).Msg("error Failed to process message")
+				}
+
+				// Closing the channel to exit
+				zlog.Info().Msg(" closing the channel")
+			}
+		}()
+
+		log.Printf("Waiting for messages")
+		<-forever
+	}
 
 }
 func processTikaMessage(d amqp.Table) error {
